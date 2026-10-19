@@ -15,5 +15,5 @@ int Evaluador::makespan(const std::vector<int>& perm) {
             aux_[i] = std::max(aux_[i], aux_[i - 1]) + inst_.tiempos_[i][trabajo];
         }
     }
-    return aux_[aux_.size() - 1];
+    return aux_[m - 1];
 }

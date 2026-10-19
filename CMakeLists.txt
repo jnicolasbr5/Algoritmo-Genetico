@@ -17,6 +17,7 @@ set(SOURCES
     src/instancia.cpp
     src/evaluador.cpp
     src/referencia.cpp
+    src/neh.cpp
 )
 
 # Create executable
