@@ -1,4 +1,6 @@
+#include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <print>
 #include <random>
@@ -19,9 +21,6 @@ double RPD(int makespan, int UB) {
 }
 
 int main(int argc, char *argv[]) {
-    // Leer la línea de comandos
-    // Uso: ./t2a <instancia> [semilla] [presupuesto] [fichero_traza.csv]
-    // ../inst/tai20_5_0.fsp
     // Falta de comandos
     if (argc < 2) {
         mostrarError();
@@ -52,14 +51,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // std::ifstream file("../go-taillard-master/pfsp/instances/tai20_5_0.fsp");
-
-    // Inicializar objetos
     std::ifstream file(ruta);
     Instancia instancia(file);
     Evaluador eval(instancia);
 
     Resultado r;
+    int valor_neh = 0;
     if (algoritmo == "neh") {
         std::println("---Uso del algoritmo NEH.---");
         r = neh(eval);
@@ -69,7 +66,7 @@ int main(int argc, char *argv[]) {
         r = busquedaAleatoria(eval, instancia.getTrabajos(), param.presupuesto, rng);
     }   else if (algoritmo == "ga") {
         std::println("---Algoritmo genetico---");
-        Genetico ga(eval, param);
+        Genetico ga(eval, param, rutaTraza, valor_neh);
         r = ga.ejecutar();
     }   else {
         return 1;
@@ -80,24 +77,35 @@ int main(int argc, char *argv[]) {
     for (int j : r.mejor_.perm) std::cout << j + 1 << " ";
     std::cout << "\nmejoras en la traza: " << r.traza_.size() << "\n";
 
-    // Guardar la traza de convergencia en CSV 
-    std::ofstream f(rutaTraza, std::ios::app);
-    f.seekp(0, std::ios::end);
-    if (f.tellp() == 0) {
-        f << "instancia,semilla,evaluaciones,mejor_cmax\n";
-    }
-    for (const auto& [ev_i, c] : r.traza_)
-        f << ruta << "," << param.semilla << "," << ev_i << "," << c << "\n";
+    ruta = std::filesystem::path(ruta).stem().string();
 
-    // Fichero CSV
-    std::string resultados = "../resultados/resultados.csv";
-    std::ofstream f2(resultados, std::ios::app);
-    f2.seekp(0, std::ios::end);
-    if (f2.tellp() == 0) {
-        f2 << "instancia,n,m,semilla,makespan,UB,RPD,evaluaciones\n";
-    }
-    f2 << ruta << "," << instancia.getTrabajos() << "," << instancia.getMaquinas() << "," << param.semilla << ","
-        << r.mejor_.makespan << "," << instancia.upperBound() << "," << RPD(r.mejor_.makespan, instancia.upperBound()) << "," << eval.evaluaciones() << "\n";
+    std::string ruta_rpd = "../resultados/rpd.txt";
+    std::ofstream rpd(ruta_rpd, std::ios::app);
+
+    // Datos de la ejecución
+    rpd << "evaluaciones=" << eval.evaluaciones() << ", pc=" << param.pc << ", pm=" << param.pm << ", k=" << param.torneo_ << ", poblacion=" << param.N_ << "\n";
     
+    // Columnas
+    rpd << std::left
+        << std::setw(15) << "Instancia" << "|"
+        << std::setw(5)  << "n"         << "|"
+        << std::setw(5)  << "m"         << "|"
+        << std::setw(7)  << "NEH"       << "|"
+        << std::setw(7)  << "Cmax"      << "|"
+        << std::setw(6)  << "RPD"       << "|"
+        << "RPDNEH\n"; 
+
+    // Datos de las columnas    
+    rpd << std::left
+        << std::setw(15) << ruta << "|"
+        << std::setw(5) << instancia.getTrabajos() << "|"
+        << std::setw(5) << instancia.getMaquinas() << "|"
+        << std::setw(7) << valor_neh << "|"
+        << std::setw(7) << r.mejor_.makespan << "|"
+        << std::fixed << std::setprecision(2)
+        << std::setw(6) << RPD(r.mejor_.makespan, instancia.upperBound()) << "|"
+        << std::fixed << std::setprecision(2)
+        << std::setw(6) << RPD(valor_neh, instancia.upperBound()) << "\n\n";
+
     return 0;
 }

@@ -50,12 +50,12 @@ Las opciones son opcionales y van en pares `--opción valor`:
 | Opción | Descripción | Por defecto |
 |---|---|---|
 | `--alg ga\|neh\|random` | Algoritmo a ejecutar | `ga` |
-| `--semilla S` | Semilla del generador aleatorio | `42` |
+| `--seed S` | Semilla del generador aleatorio | `42` |
 | `--presupuesto E` | Evaluaciones del makespan | `50000` |
 | `--N N` | Tamaño de la población | `100` |
 | `--pc PC` | Probabilidad de cruce | `0.9` |
 | `--pm PM` | Probabilidad de mutación (por hijo) | `0.1` |
-| `--torneo K` | Tamaño del torneo | `2` |
+| `--k K` | Tamaño del torneo | `2` |
 | `--traza fichero.csv` | Guarda la traza de convergencia | no se guarda |
 
 Si algún argumento es incorrecto, el programa muestra el error y termina.

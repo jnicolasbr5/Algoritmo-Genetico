@@ -1,2 +1,5 @@
 build/
-go-taillard-master/
+inst/
+images/
+data/
+.prev/

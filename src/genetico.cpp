@@ -10,9 +10,11 @@
 #include "neh.hpp"
 #include "resultado.hpp"
 
-Genetico::Genetico(Evaluador& eval, ParametrosAG param) : eval_(eval), param_(param) {
+
+Genetico::Genetico(Evaluador& eval, ParametrosAG param, std::string ruta, int& valor_neh) : eval_(eval), param_(param), conv_(ruta, std::ios::trunc), valor_neh_(valor_neh) {
     n_trabajos_ = eval_.inst_.getTrabajos();
     rng_.seed(param_.semilla);
+    conv_ << "evaluaciones,makespan\n";
 }
 
 
@@ -23,6 +25,9 @@ void Genetico::evaluar(Individuo& ind) {
         res_.mejor_ = ind;
         res_.traza_.push_back({eval_.evaluaciones(), ind.makespan});
     }
+
+    // Muestra la evaluación y el makespan
+    conv_ << eval_.evaluaciones() << "," << res_.mejor_.makespan << "\n";
 }
 
 
@@ -31,6 +36,8 @@ void Genetico::inicializarPoblacion() {
 
     // El primer individuo sera el valor NEH
     Resultado rneh = neh(eval_);
+    valor_neh_ = rneh.mejor_.makespan;
+    eval_.reiniciarContador();
     poblacion_[0] = rneh.mejor_;
     if (rneh.mejor_.makespan < res_.mejor_.makespan) {
             res_.mejor_ = rneh.mejor_;
@@ -46,6 +53,7 @@ void Genetico::inicializarPoblacion() {
     }   
 }
 
+
 int Genetico::seleccionar() {
     std::uniform_int_distribution<int> dist(0, param_.N_ - 1);
     int mejor = dist(rng_);  
@@ -56,6 +64,7 @@ int Genetico::seleccionar() {
     }
     return mejor; 
 }
+
 
 std::vector<int> Genetico::cruceOX(const std::vector<int>& p1, const std::vector<int>& p2, int a, int b) {
     const int n = static_cast<int>(p1.size());
@@ -79,11 +88,13 @@ std::vector<int> Genetico::cruceOX(const std::vector<int>& p1, const std::vector
     return hijo;
 }
 
+
 void Genetico::mutacionSwap(std::vector<int>& perm, std::mt19937& rng) {
     std::uniform_int_distribution<int> d(0, (int)perm.size() - 1);
     int i = d(rng), j = d(rng);
     std::swap(perm[i], perm[j]);
 }
+
 
 void Genetico::mutacionInsercion(std::vector<int>& perm, std::mt19937& rng) {
     std::uniform_int_distribution<int> d(0, (int)perm.size() - 1);
@@ -92,6 +103,7 @@ void Genetico::mutacionInsercion(std::vector<int>& perm, std::mt19937& rng) {
     perm.erase(perm.begin() + i);              // lo saco de la posición i
     perm.insert(perm.begin() + j, trabajo);    // lo meto en la posición j
 }
+
 
 bool Genetico::esPermutacionValida(const std::vector<int>& v, int n) {
     if ((int)v.size() != n) return false;
@@ -103,6 +115,7 @@ bool Genetico::esPermutacionValida(const std::vector<int>& v, int n) {
     return true;
 }
 
+
 void Genetico::elegirMutacion(std::vector<int>& perm) {
     std::uniform_real_distribution<double> U(0.0, 1.0);
     if (U(rng_) < 0.5)
@@ -110,6 +123,7 @@ void Genetico::elegirMutacion(std::vector<int>& perm) {
     else
         mutacionSwap(perm, rng_);
 }   
+
 
 std::vector<Individuo> Genetico::generarNuevaPoblacion() {
     std::uniform_real_distribution<double> U(0.0, 1.0);
@@ -149,6 +163,7 @@ std::vector<Individuo> Genetico::generarNuevaPoblacion() {
     return nueva;
 }
 
+
 void Genetico::reemplazar(std::vector<Individuo>& nueva) {
     auto mejorAnt = std::min_element(poblacion_.begin(), poblacion_.end(),
         [](const Individuo& x, const Individuo& y){ return x.makespan < y.makespan; });
@@ -171,4 +186,3 @@ Resultado Genetico::ejecutar() {
     }
     return res_;
 }
-

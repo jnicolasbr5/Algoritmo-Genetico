@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <random>
 #include <vector>
 
@@ -24,6 +25,8 @@ class Genetico {
         std::mt19937 rng_;
         std::vector<Individuo> poblacion_;
         Resultado res_;
+        std::ofstream conv_;
+        int& valor_neh_;
 
         void evaluar(Individuo& ind);
         void inicializarPoblacion();
@@ -40,9 +43,8 @@ class Genetico {
         void elegirMutacion(std::vector<int>& perm);
 
     public:
-        Genetico(Evaluador& eval, ParametrosAG param);
+        Genetico(Evaluador& eval, ParametrosAG param, std::string ruta, int& valor_neh);
         ~Genetico() = default;
 
         Resultado ejecutar();
-        
 };

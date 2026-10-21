@@ -1,0 +1,23 @@
+¿Cuánto mejora el AG a NEH?
+En las instancias comprobadas mejora entorno a un 2-6%
+¿Qué componente influye más?
+En los experimentos realizados no se observa una gran diferencia. Sin embargo, 
+según el contenido visto en la asignatura y el estudio del algoritmo, el 
+parámetro k es el que  tiene más influencia en la eficiencia del algoritmo.
+¿Cómo se compara con los resultados publicados?
+En algunas instancias iguala a los resultados publicados, obteniendo como Cmax 
+el valor de la cota superior, y en otros no los mejora, simplemente se acerca. 
+En nigún caso mejora a lo ya conocido.
+¿Hay convergencia prematura?
+En las gráficas se observa convergencia relativamente prematura. Alcanzando la 
+solución óptima en las primeras 500 evaluaciones. podria decirse 
+
+
+evaluaciones=50000, pc=0.8, pm=0.4, k=2, poblacion=30
+Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
+tai100_20_3    |100  |20   |6557   |6496   |3.01  |3.98  
+
+evaluaciones=50000, pc=0.8, pm=0.4, k=2, poblacion=30
+Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
+tai100_20_3    |100  |20   |6557   |6503   |3.12  |3.98  
+
