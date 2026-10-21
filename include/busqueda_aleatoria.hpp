@@ -1,4 +1,3 @@
-// referencia.h
 #pragma once
 
 #include <random>

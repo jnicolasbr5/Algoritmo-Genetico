@@ -16,6 +16,7 @@ class Instancia {
         void show();
         int getTrabajos() const {return trabajos_;}
         int getMaquinas() const {return maquinas_;}
+        int upperBound() const {return cota_superior_;}
         Instancia(std::ifstream& file);
         ~Instancia() = default;
 };

@@ -4,19 +4,53 @@
 #include <random>
 
 #include "evaluador.hpp"
+#include "genetico.hpp"
 #include "instancia.hpp"
 #include "neh.hpp"
-#include "referencia.hpp"
+#include "busqueda_aleatoria.hpp"
 #include "resultado.hpp"
+
+void mostrarError() {
+    std::cerr << "Uso: " << "./genetic <instancia> [--alg ga|neh|random] [opciones]\n";
+}
+
+double RPD(int makespan, int UB) {
+    return 100.0 * (makespan - UB) / UB;
+}
 
 int main(int argc, char *argv[]) {
     // Leer la línea de comandos
     // Uso: ./t2a <instancia> [semilla] [presupuesto] [fichero_traza.csv]
-    std::string ruta = (argc > 1) ? argv[1] : "prueba.txt";
-    std::string algoritmo = (argc > 2) ? argv[2] : "random";
-    unsigned semilla = (argc > 3) ? std::stoul(argv[3]) : 42;
-    long long presupuesto = (argc > 4) ? std::stoll(argv[4]) : 50000;
-    std::string rutaTraza = (argc > 5) ? argv[5] : "traza.txt";
+    // ../inst/tai20_5_0.fsp
+    // Falta de comandos
+    if (argc < 2) {
+        mostrarError();
+        return 1;
+    }
+
+    // Valores de configuración predeterminados
+    std::string ruta = argv[1];
+    std::string algoritmo = "ga";
+    std::string rutaTraza = "../resultados/convergencia.csv";
+    ParametrosAG param;
+
+    // Lectura de la línea de comandos
+    for (int i = 2; i + 1 < argc; i += 2) {
+        std::string op = argv[i];
+        std::string val = argv[i + 1];
+        if      (op == "--alg")         algoritmo = val;
+        else if (op == "--traza")       rutaTraza = val;
+        else if (op == "--N")           param.N_ = std::stoi(val);
+        else if (op == "--pc")          param.pc = std::stod(val);
+        else if (op == "--pm")          param.pm = std::stod(val);
+        else if (op == "--k")      param.torneo_ = std::stoi(val);
+        else if (op == "--seed")     param.semilla = std::stoi(val);
+        else if (op == "--pres") param.presupuesto = std::stoll(val);
+        else {
+            std::cerr << "Opcion desconocida: " << op << "\n";
+            return 1;
+        }
+    }
 
     // std::ifstream file("../go-taillard-master/pfsp/instances/tai20_5_0.fsp");
 
@@ -29,10 +63,16 @@ int main(int argc, char *argv[]) {
     if (algoritmo == "neh") {
         std::println("---Uso del algoritmo NEH.---");
         r = neh(eval);
-    }   else {
+    }   else if (algoritmo == "random") {
         std::println("---Uso del algoritmo de búsqueda aleatoria.---");
-        std::mt19937 rng(semilla);
-        r = busquedaAleatoria(eval, instancia.getTrabajos(), presupuesto, rng);
+        std::mt19937 rng(param.semilla);
+        r = busquedaAleatoria(eval, instancia.getTrabajos(), param.presupuesto, rng);
+    }   else if (algoritmo == "ga") {
+        std::println("---Algoritmo genetico---");
+        Genetico ga(eval, param);
+        r = ga.ejecutar();
+    }   else {
+        return 1;
     }
 
     std::cout << "Cmax = " << r.mejor_.makespan << "  evaluaciones = " << eval.evaluaciones() << "\n";
@@ -40,13 +80,24 @@ int main(int argc, char *argv[]) {
     for (int j : r.mejor_.perm) std::cout << j + 1 << " ";
     std::cout << "\nmejoras en la traza: " << r.traza_.size() << "\n";
 
-    // Opcional: guardar la traza de convergencia en CSV 
-    if (!rutaTraza.empty()) {
-        std::ofstream f(rutaTraza);
-        f << "evaluaciones,mejor_cmax\n";
-        for (const auto& [ev_i, c] : r.traza_)
-            f << ev_i << "," << c << "\n";
+    // Guardar la traza de convergencia en CSV 
+    std::ofstream f(rutaTraza, std::ios::app);
+    f.seekp(0, std::ios::end);
+    if (f.tellp() == 0) {
+        f << "instancia,semilla,evaluaciones,mejor_cmax\n";
     }
+    for (const auto& [ev_i, c] : r.traza_)
+        f << ruta << "," << param.semilla << "," << ev_i << "," << c << "\n";
 
+    // Fichero CSV
+    std::string resultados = "../resultados/resultados.csv";
+    std::ofstream f2(resultados, std::ios::app);
+    f2.seekp(0, std::ios::end);
+    if (f2.tellp() == 0) {
+        f2 << "instancia,n,m,semilla,makespan,UB,RPD,evaluaciones\n";
+    }
+    f2 << ruta << "," << instancia.getTrabajos() << "," << instancia.getMaquinas() << "," << param.semilla << ","
+        << r.mejor_.makespan << "," << instancia.upperBound() << "," << RPD(r.mejor_.makespan, instancia.upperBound()) << "," << eval.evaluaciones() << "\n";
+    
     return 0;
 }

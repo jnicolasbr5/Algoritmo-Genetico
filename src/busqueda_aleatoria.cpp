@@ -1,4 +1,4 @@
-#include "referencia.hpp"
+#include "busqueda_aleatoria.hpp"
 #include "resultado.hpp"
 
 #include <algorithm>

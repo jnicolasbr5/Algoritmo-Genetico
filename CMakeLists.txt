@@ -16,8 +16,9 @@ set(SOURCES
     src/main.cpp
     src/instancia.cpp
     src/evaluador.cpp
-    src/referencia.cpp
+    src/busqueda_aleatoria.cpp
     src/neh.cpp
+    src/genetico.cpp
 )
 
 # Create executable
