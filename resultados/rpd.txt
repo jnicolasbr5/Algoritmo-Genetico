@@ -1,23 +1,46 @@
 ¿Cuánto mejora el AG a NEH?
-En las instancias comprobadas mejora entorno a un 2-6%
-¿Qué componente influye más?
-En los experimentos realizados no se observa una gran diferencia. Sin embargo, 
-según el contenido visto en la asignatura y el estudio del algoritmo, el 
-parámetro k es el que  tiene más influencia en la eficiencia del algoritmo.
-¿Cómo se compara con los resultados publicados?
-En algunas instancias iguala a los resultados publicados, obteniendo como Cmax 
-el valor de la cota superior, y en otros no los mejora, simplemente se acerca. 
-En nigún caso mejora a lo ya conocido.
-¿Hay convergencia prematura?
-En las gráficas se observa convergencia relativamente prematura. Alcanzando la 
-solución óptima en las primeras 500 evaluaciones. podria decirse 
+En las instancias comprobadas mejora entorno a un 1-4.5%
 
+¿Qué componente influye más?
+Las configuraciones con población de 30 obtuvieron mejores resultados que la de 100 
+en las mismas instancias, lo que sugiere que el tamaño de población, al permitir 
+más generaciones con el mismo presupuesto, es el que más influye. 
+También al aumentar el torneo de k = 2 a k = 3, se observa una mejora: mayor presión selectiva.
+La semilla NEH también tiene un peso importante, ya que proporciona desde el 
+inicio una solución de buena calidad.
+
+¿Cómo se compara con los resultados publicados?
+En algunas instancias se iguala a los resultados publicados. En la mayoría se 
+acerca sin igualar (0.5% - 1.5%), y en las de mayor número de máquinas se 
+obtienen los peores resultados (+3%). En nigún caso mejora a lo ya conocido.
+
+¿Hay convergencia prematura?
+Sí, en torno a las 20k evaluaciones el algoritmo deja de mejorar. 
+
+
+evaluaciones=50000, pc=0.6, pm=0.7, k=2, poblacion=100
+Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
+tai20_10_2     |20   |10   |1557   |1519   |1.54  |4.08  
+tai20_5_4      |20   |5    |1305   |1250   |1.13  |5.58  
+tai100_20_3    |100  |20   |6557   |6536   |3.65  |3.98  
 
 evaluaciones=50000, pc=0.8, pm=0.4, k=2, poblacion=30
 Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
 tai100_20_3    |100  |20   |6557   |6496   |3.01  |3.98  
+tai20_5_0      |20   |5    |1286   |1286   |0.63  |0.63  
+tai20_5_9      |20   |5    |1151   |1108   |0.00  |3.88  
+tai20_10_2     |20   |10   |1557   |1504   |0.53  |4.08  
 
-evaluaciones=50000, pc=0.8, pm=0.4, k=2, poblacion=30
+evaluaciones=50000, pc=0.9, pm=0.5, k=2, poblacion=30
 Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
-tai100_20_3    |100  |20   |6557   |6503   |3.12  |3.98  
+tai20_10_1     |20   |10   |1729   |1676   |1.02  |4.22  
+tai50_20_2     |50   |20   |3927   |3828   |4.36  |7.06  
+tai100_5_0     |100  |5    |5519   |5495   |0.04  |0.47  
+tai200_10_4    |200  |10   |10645  |10575  |0.48  |1.15  
 
+evaluaciones=50000, pc=0.9, pm=0.5, k=3, poblacion=30
+Instancia      |n    |m    |NEH    |Cmax   |RPD   |RPDNEH
+tai100_5_0     |100  |5    |5519   |5493   |0.00  |0.47  
+tai100_10_0    |100  |10   |5846   |5805   |0.61  |1.32  
+tai200_10_0    |200  |10   |10942  |10942  |0.68  |0.68  
+tai50_20_2     |50   |20   |3927   |3803   |3.68  |7.06  

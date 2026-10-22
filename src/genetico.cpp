@@ -18,6 +18,11 @@ Genetico::Genetico(Evaluador& eval, ParametrosAG param, std::string ruta, int& v
 }
 
 
+/**
+ * @brief 
+ * 
+ * @param ind 
+ */
 void Genetico::evaluar(Individuo& ind) {
     ind.makespan = eval_.makespan(ind.perm);
 
@@ -31,6 +36,12 @@ void Genetico::evaluar(Individuo& ind) {
 }
 
 
+/**
+ * @brief Crea y evalúa la población inicial
+ * 
+ * El primer individuo es la solución de la heurística NEH y el resto son aleatorios.
+ * 
+ */
 void Genetico::inicializarPoblacion() {
     poblacion_.assign(param_.N_, Individuo());
 
@@ -44,6 +55,7 @@ void Genetico::inicializarPoblacion() {
             res_.traza_.push_back({eval_.evaluaciones(), rneh.mejor_.makespan});
     }
 
+    // Búsqueda aleatoria
     for (int i = 1; i < param_.N_; i++) {
         Individuo& individuo = poblacion_[i];
         individuo.perm.resize(n_trabajos_);
@@ -54,6 +66,13 @@ void Genetico::inicializarPoblacion() {
 }
 
 
+/**
+ * @brief Selección por torneo
+ * 
+ * Elige al azar k individuos y devuelve el índice del que tenga menor makespan
+ * 
+ * @return int Índice del individuo ganador del torneo
+ */
 int Genetico::seleccionar() {
     std::uniform_int_distribution<int> dist(0, param_.N_ - 1);
     int mejor = dist(rng_);  
@@ -66,6 +85,16 @@ int Genetico::seleccionar() {
 }
 
 
+/**
+ * @brief Genera un hijo que conserva el segmento [a, b] de p1 en las mismas posiciones
+ * y completa el resto con los 
+ * 
+ * @param p1 Primer padre: aporta el segmento
+ * @param p2 Segundo padre: aporta el orden de los trabajos restantes
+ * @param a Inicio del segmento a copiar  
+ * @param b Fin del segmento a copiar
+ * @return std::vector<int> Permutación hija del cruce
+ */
 std::vector<int> Genetico::cruceOX(const std::vector<int>& p1, const std::vector<int>& p2, int a, int b) {
     const int n = static_cast<int>(p1.size());
     std::vector<int> hijo(n, -1);          // -1 = hueco libre
@@ -125,9 +154,14 @@ void Genetico::elegirMutacion(std::vector<int>& perm) {
 }   
 
 
+/**
+ * @brief Repite el ciclo selección → cruce → mutación → evaluación hasta reunir N hijos 
+ * 
+ * @return std::vector<Individuo> 
+ */
 std::vector<Individuo> Genetico::generarNuevaPoblacion() {
-    std::uniform_real_distribution<double> U(0.0, 1.0);
-    std::uniform_int_distribution<int> corte(0, n_trabajos_ - 1);
+    std::uniform_real_distribution<double> U(0.0, 1.0); // Para probabilidades
+    std::uniform_int_distribution<int> corte(0, n_trabajos_ - 1); // Para puntos del corte del cruce
 
     std::vector<Individuo> nueva;
     nueva.reserve(param_.N_);
@@ -135,27 +169,34 @@ std::vector<Individuo> Genetico::generarNuevaPoblacion() {
     while ((int)nueva.size() < param_.N_) {
         if (eval_.evaluaciones() >= param_.presupuesto) break;
 
+        // Selección por torneo de los dos padres
         const Individuo& p1 = poblacion_[seleccionar()];
         const Individuo& p2 = poblacion_[seleccionar()];
 
         Individuo h1, h2;
         if (U(rng_) < param_.pc) {
-            int a = corte(rng_), b = corte(rng_);
+            int a = corte(rng_), b = corte(rng_); // Se eligen los puntos de corte y se ordenan
             if (a > b) std::swap(a, b);
+
+            // h1 hereda el segmento de p1, y h2 el de p2
             h1.perm = cruceOX(p1.perm, p2.perm, a, b);
             h2.perm = cruceOX(p2.perm, p1.perm, a, b);
         } else {
+            // Sin cruce: los hijos son copias de los padres
             h1.perm = p1.perm;
             h2.perm = p2.perm;
         }
 
+        // Mutación, evaluación e inserción de cada hijo
         for (Individuo* h : {&h1, &h2}) {
+
+            // Con probabilidad pm se aplica mutación 
             if (U(rng_) < param_.pm) {
                 elegirMutacion(h->perm);
             }
             assert(esPermutacionValida(h->perm, n_trabajos_));
             if (eval_.evaluaciones() >= param_.presupuesto) break;
-            evaluar(*h);
+            evaluar(*h); // Calcula el makespan
             nueva.push_back(*h);
             if ((int)nueva.size() >= param_.N_) break;
         }
@@ -164,17 +205,37 @@ std::vector<Individuo> Genetico::generarNuevaPoblacion() {
 }
 
 
+/**
+ * @brief Reemplaza la población actual por la nueva aplicando elitismo.
+ * 
+ * @param nueva Población de hijos evaluados
+ */
 void Genetico::reemplazar(std::vector<Individuo>& nueva) {
+
+    // Mejor individuo de la generación anterior
     auto mejorAnt = std::min_element(poblacion_.begin(), poblacion_.end(),
         [](const Individuo& x, const Individuo& y){ return x.makespan < y.makespan; });
+
+    // Peor individuo de la nueva generación
     auto peorHijo = std::max_element(nueva.begin(), nueva.end(),
         [](const Individuo& x, const Individuo& y){ return x.makespan < y.makespan; });
+
+    // Elitismo: si el mejor anterior supera al peor hijo, ocupa su lugar
     if (mejorAnt->makespan < peorHijo->makespan)
         *peorHijo = *mejorAnt;
     poblacion_ = std::move(nueva);
 }
 
 
+/**
+ * @brief Ejecuta el algoritmo genético hasta agotar el presupuesto de evaluaciones.
+ * 
+ * Inicializa la población y, en cada generación, crea una nueva población de
+ * hijos y la sustituye por la actual. Si el presupuesto se agota antes de
+ * completar una generación, esa población incompleta se descarta.
+ * 
+ * @return Resultado Mejor resultado encontrado en la evaluación
+ */
 Resultado Genetico::ejecutar() {
     eval_.reiniciarContador();
     inicializarPoblacion();
